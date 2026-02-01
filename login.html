@@ -1,0 +1,54 @@
+<!doctype html>
+<html lang="id">
+  <head>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <title>Login KonveksiPro</title>
+  </head>
+  <body class="bg-[#0f172a] h-screen flex items-center justify-center">
+    <div class="bg-slate-900 p-10 rounded-2xl border border-slate-800 w-96">
+      <h2 class="text-amber-500 text-3xl font-bold mb-6 text-center">
+        KonveksiPro
+      </h2>
+      <input
+        id="user"
+        type="text"
+        placeholder="Username"
+        class="w-full p-3 mb-4 bg-slate-800 text-white rounded-lg" />
+      <input
+        id="pass"
+        type="password"
+        placeholder="Password"
+        class="w-full p-3 mb-6 bg-slate-800 text-white rounded-lg" />
+      <button
+        onclick="handleAuth('login')"
+        class="w-full bg-amber-500 py-3 rounded-lg font-bold mb-3">
+        Masuk
+      </button>
+      <button
+        onclick="handleAuth('register')"
+        class="w-full border border-amber-500 text-amber-500 py-3 rounded-lg">
+        Daftar
+      </button>
+    </div>
+
+    <script>
+      async function handleAuth(type) {
+        const username = document.getElementById("user").value;
+        const password = document.getElementById("pass").value;
+        const res = await fetch(`http://localhost:3000/api/${type}`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ username, password }),
+        });
+        const data = await res.json();
+        if (data.success || type === "register") {
+          if (data.success) localStorage.setItem("user", data.username);
+          alert(type + " Berhasil!");
+          if (data.success) window.location.href = "index.html";
+        } else {
+          alert("Gagal!");
+        }
+      }
+    </script>
+  </body>
+</html>

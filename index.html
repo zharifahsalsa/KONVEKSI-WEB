@@ -1,0 +1,729 @@
+<!doctype html>
+<html lang="id">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Katalog Konveksi - Pro</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="index.css" />
+  </head>
+  <body class="bg-gray-100">
+    <nav
+      class="bg-white shadow-sm p-4 flex justify-between items-center px-6 sticky top-0 z-50">
+      <h2 class="font-bold text-2xl text-red-600">KonveksiPro</h2>
+
+      <div class="flex items-center gap-4">
+        <button
+          onclick="toggleOrderHistory()"
+          class="text-sm font-bold text-gray-600 hover:text-red-600 flex items-center gap-1">
+          📦 <span class="hidden sm:inline">Pesanan Saya</span>
+        </button>
+
+        <button
+          onclick="openTransactionModal()"
+          class="flex items-center gap-1 text-gray-600 font-bold hover:text-red-600 transition">
+          <span>💰</span>
+          <span class="hidden md:inline">Transaksi</span>
+        </button>
+
+        <button
+          onclick="toggleCart()"
+          class="relative p-2 bg-gray-100 rounded-full hover:bg-gray-200 transition">
+          <span class="text-2xl">🛒</span>
+          <span
+            id="badge"
+            class="absolute -top-1 -right-1 bg-red-600 text-white text-[10px] rounded-full px-1.5 font-bold"
+            >0</span
+          >
+        </button>
+      </div>
+    </nav>
+    <h1 class="text-center text-3xl font-extrabold my-8">Katalog Konveksi</h1>
+
+    <div class="container mx-auto px-4" id="product-list"></div>
+
+    <div
+      id="cart-sidebar"
+      class="fixed top-0 right-0 h-full w-80 bg-white shadow-2xl z-[100] transform translate-x-full transition-transform duration-300 ease-in-out p-6 overflow-y-auto">
+      <div class="flex justify-between items-center mb-6 border-b pb-4">
+        <h2 class="text-xl font-bold">🛒 Keranjang</h2>
+        <button onclick="openCheckoutModal()" class="text-3xl">&times;</button>
+      </div>
+
+      <div id="cart-items" class="space-y-4 mb-6"></div>
+
+      <div class="border-t pt-4">
+        <div class="flex justify-between font-bold text-lg mb-4">
+          <span>Total:</span>
+          <span id="total-price" class="text-red-600">Rp 0</span>
+        </div>
+        <button
+          onclick="openCheckoutModal()"
+          class="w-full bg-red-600 text-white py-3 rounded-xl font-bold hover:bg-red-700 transition">
+          Checkout Sekarang
+        </button>
+      </div>
+    </div>
+
+    <div
+      id="cart-overlay"
+      onclick="toggleCart()"
+      class="fixed inset-0 bg-black opacity-50 z-[90] hidden"></div>
+
+    <div
+      id="order-modal"
+      class="fixed inset-0 bg-black bg-opacity-50 z-[100] hidden flex items-center justify-center p-4">
+      <div
+        class="bg-white rounded-xl shadow-2xl w-full max-w-2xl max-h-[80vh] flex flex-col">
+        <div
+          class="p-6 border-b flex justify-between items-center bg-gray-50 rounded-t-xl">
+          <h2 class="text-xl font-bold text-gray-800">
+            📦 Riwayat Pesanan Saya
+          </h2>
+          <button
+            onclick="toggleOrderHistory()"
+            class="text-3xl text-gray-400 hover:text-red-600">
+            &times;
+          </button>
+        </div>
+
+        <div
+          id="edit-detail-modal"
+          class="fixed inset-0 bg-black bg-opacity-60 z-[110] hidden flex items-center justify-center p-4">
+          <div
+            class="bg-white rounded-xl shadow-2xl w-full max-w-sm p-6 animate-fade-in">
+            <h3 class="text-lg font-bold text-gray-800 mb-2">
+              ✏️ Ubah Detail Pesanan
+            </h3>
+            <p class="text-sm text-gray-500 mb-4">
+              Tambahkan catatan ukuran, warna, atau request khusus.
+            </p>
+
+            <div class="mb-4">
+              <label
+                class="block text-xs font-bold text-gray-700 uppercase mb-1"
+                >Catatan / Detail</label
+              >
+              <textarea
+                id="detail-input"
+                rows="3"
+                class="w-full border border-gray-300 rounded-lg p-3 text-sm focus:ring-2 focus:ring-red-500 focus:border-red-500 outline-none resize-none"
+                placeholder="Contoh: Ukuran XL, Warna Hitam..."></textarea>
+            </div>
+
+            <div class="flex justify-end gap-2">
+              <button
+                onclick="closeEditModal()"
+                class="px-4 py-2 text-gray-600 text-sm font-bold hover:bg-gray-100 rounded-lg transition">
+                Batal
+              </button>
+              <button
+                onclick="saveDetailChange()"
+                class="px-4 py-2 bg-red-600 text-white text-sm font-bold rounded-lg hover:bg-red-700 shadow-lg transition">
+                Simpan Perubahan
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <div
+          id="my-order-list"
+          class="p-6 overflow-y-auto space-y-4 bg-gray-50 flex-1"></div>
+
+        <div class="p-4 border-t text-center text-gray-500 text-sm">
+          Terima Kasih telah mempercayai KonveksiPro!
+        </div>
+      </div>
+    </div>
+
+    <div
+      id="transaction-modal"
+      class="fixed inset-0 bg-black bg-opacity-50 z-[105] hidden flex items-center justify-center p-4">
+      <div
+        class="bg-white rounded-xl shadow-2xl w-full max-w-2xl h-[80vh] flex flex-col animate-fade-in overflow-hidden">
+        <div class="bg-gray-50 p-6 border-b flex justify-between items-center">
+          <div>
+            <h2 class="text-xl font-bold text-gray-800">💰 Riwayat Keuangan</h2>
+            <p class="text-sm text-gray-500">Rekap pembayaran pesananmu</p>
+          </div>
+          <button
+            onclick="closeTransactionModal()"
+            class="text-gray-400 hover:text-gray-600 text-2xl font-bold">
+            &times;
+          </button>
+        </div>
+
+        <div class="p-6 bg-white border-b">
+          <div
+            class="bg-gradient-to-r from-red-600 to-red-500 rounded-xl p-5 text-white shadow-lg flex justify-between items-center">
+            <div>
+              <p class="text-red-100 text-sm font-medium mb-1">
+                Total Belanja Kamu
+              </p>
+              <h3 id="total-spend" class="text-3xl font-bold">Rp 0</h3>
+            </div>
+            <div class="text-right">
+              <div class="text-4xl opacity-20">💳</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="flex-1 overflow-y-auto p-6 bg-gray-50">
+          <table class="w-full text-left border-collapse">
+            <thead>
+              <tr class="text-xs text-gray-500 border-b border-gray-200">
+                <th class="pb-3 font-bold uppercase">Tanggal / ID</th>
+                <th class="pb-3 font-bold uppercase">Status</th>
+                <th class="pb-3 font-bold uppercase text-right">Nominal</th>
+              </tr>
+            </thead>
+            <tbody id="transaction-list" class="text-sm"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <div
+      id="checkout-modal"
+      class="fixed inset-0 bg-black bg-opacity-60 z-[120] hidden flex items-center justify-center p-4">
+      <div
+        class="bg-white rounded-xl shadow-2xl w-full max-w-md p-6 animate-fade-in">
+        <h3 class="text-xl font-bold text-gray-800 mb-4 border-b pb-2">
+          💳 Konfirmasi Pembayaran
+        </h3>
+
+        <div
+          class="bg-gray-50 p-4 rounded-lg mb-4 flex justify-between items-center">
+          <span class="text-gray-600 font-medium">Total Tagihan</span>
+          <span id="checkout-total" class="text-xl font-bold text-red-600"
+            >Rp 0</span
+          >
+        </div>
+
+        <div class="mb-6">
+          <label class="block text-sm font-bold text-gray-700 mb-2"
+            >Pilih Metode Pembayaran</label
+          >
+          <select
+            id="payment-method-select"
+            class="w-full border border-gray-300 p-3 rounded-lg focus:ring-2 focus:ring-red-500 outline-none bg-white">
+            <option value="Transfer BCA">
+              🏦 Transfer Bank BCA (123-456-789)
+            </option>
+            <option value="Transfer BRI">
+              🏦 Transfer Bank BRI (987-654-321)
+            </option>
+            <option value="E-Wallet DANA">📱 DANA (0812-3456-7890)</option>
+            <option value="E-Wallet GoPay">📱 GoPay (0812-3456-7890)</option>
+            <option value="COD (Bayar di Tempat)">
+              🚚 COD (Bayar di Tempat)
+            </option>
+          </select>
+        </div>
+
+        <div class="flex gap-3">
+          <button
+            onclick="
+              document.getElementById('checkout-modal').classList.add('hidden')
+            "
+            class="flex-1 py-3 text-gray-600 font-bold hover:bg-gray-100 rounded-lg">
+            Batal
+          </button>
+          <button
+            onclick="processCheckout()"
+            class="flex-1 py-3 bg-red-600 text-white font-bold rounded-lg hover:bg-red-700 shadow-lg">
+            Buat Pesanan
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      let cart = [];
+
+      function toggleCart() {
+        document
+          .getElementById("cart-sidebar")
+          .classList.toggle("translate-x-full");
+        document.getElementById("cart-overlay").classList.toggle("hidden");
+      }
+
+      // Ambil data produk
+      async function loadProducts() {
+        const res = await fetch("http://localhost:3000/api/products");
+        const products = await res.json();
+        const container = document.getElementById("product-list");
+        container.innerHTML = "";
+
+        products.forEach((p) => {
+          container.innerHTML += `
+            <div class="card inline-block m-2 bg-white rounded-lg overflow-hidden w-60">
+              <img src="${p.gambar}" alt="${p.nama}" />
+              <div class="product-info p-4">
+                <h3 class="font-bold text-lg">${p.nama}</h3>
+                <p class="text-sm text-gray-500 truncate">${p.deskripsi}</p>
+                <span class="price block font-bold text-red-600 mt-2">Rp ${p.harga.toLocaleString()}</span>
+              </div>
+              <button class="w-full bg-red-600 text-white py-2 font-bold hover:bg-red-700 transition" onclick="addToCart('${p._id}', '${p.nama}', ${p.harga}, '${p.gambar}')">+</button>
+            </div>
+          `;
+        });
+      }
+
+      // 1. fungsi tambah ke keranjang (cek duplikat)
+      function addToCart(id, name, price, img) {
+        //cek apakah barang sudah ada di keranjang
+        const existingItem = cart.find((item) => item.id === id);
+        if (existingItem) {
+          existingItem.quantity++; //kalau ada, tambah qty }
+        } else {
+          cart.push({ id, name, price, img, quantity: 1 }); //kalau belum ada, tambahkan ke keranjang
+        }
+
+        updateCartUI();
+
+        //buka sidebar otomatis jika belum terbuka
+        const sidebar = document.getElementById("cart-sidebar");
+        if (sidebar.classList.contains("translate-x-full")) {
+          toggleCart();
+        }
+      }
+
+      //2. fungsi tampilan keranjang
+      function updateCartUI() {
+        const cartList = document.getElementById("cart-items");
+        const badge = document.getElementById("badge");
+        const totalLabel = document.getElementById("total-price");
+        const checkoutBtn = document.querySelector(
+          "button[onclick='checkoutToMongo()']",
+        );
+
+        // 1. Reset tampilan list biar gak numpuk
+        cartList.innerHTML = "";
+
+        let total = 0;
+        let totalQty = 0;
+
+        // 2. Cek apakah keranjang kosong
+        if (cart.length === 0) {
+          cartList.innerHTML = `
+      <div class="text-center py-10">
+        <span class="text-4xl">🛒</span>
+        <p class="text-gray-400 mt-2">Keranjang masih kosong</p>
+      </div>`;
+          if (checkoutBtn)
+            checkoutBtn.classList.add("opacity-50", "cursor-not-allowed");
+        } else {
+          if (checkoutBtn)
+            checkoutBtn.classList.remove("opacity-50", "cursor-not-allowed");
+        }
+
+        // 3. Looping item di keranjang
+        cart.forEach((item) => {
+          total += item.price * item.quantity;
+          totalQty += item.quantity;
+
+          cartList.innerHTML += `
+      <div class="flex items-center justify-between border-b border-gray-100 py-3">
+        <div class="flex items-center gap-3 flex-1">
+            <img src="${item.img}" class="w-12 h-12 rounded object-cover border border-gray-200">
+            <div>
+                <h4 class="font-bold text-gray-800 text-sm line-clamp-1">${item.name}</h4>
+                <p class="text-xs text-gray-500">Rp ${item.price.toLocaleString()} x ${item.quantity}</p>
+            </div>
+        </div>
+
+        <div class="flex items-center gap-2 mx-2">
+           <button onclick="updateQuantity('${item.id}', 'decrease')" 
+                   class="w-6 h-6 flex items-center justify-center bg-gray-100 rounded text-gray-600 font-bold hover:bg-gray-200">-</button>
+           <span class="text-sm font-semibold w-4 text-center">${item.quantity}</span>
+           <button onclick="updateQuantity('${item.id}', 'increase')" 
+                   class="w-6 h-6 flex items-center justify-center bg-gray-100 rounded text-gray-600 font-bold hover:bg-gray-200">+</button>
+        </div>
+
+        <button onclick="removeItem('${item.id}')" class="text-red-500 hover:text-red-700 p-1">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+            </svg>
+        </button>
+      </div>
+    `;
+        });
+
+        // 4. Update Badge dan Total Harga
+        badge.innerText = totalQty;
+        totalLabel.innerText = "Rp " + total.toLocaleString();
+      }
+
+      // 3. Fungsi Tambah/Kurang Jumlah (Baru)
+      function updateQuantity(id, action) {
+        const item = cart.find((p) => p.id === id);
+        if (item) {
+          if (action === "increase") {
+            item.quantity++;
+          } else if (action === "decrease") {
+            if (item.quantity > 1) {
+              item.quantity--;
+            }
+          }
+        }
+        updateCartUI();
+      }
+
+      // 4. Fungsi Hapus Item
+      function removeItem(id) {
+        cart = cart.filter((item) => item.id !== id);
+        updateCartUI();
+      }
+
+      //Tombol Checkout di Keranjang diklik -> Buka Modal
+      function openCheckoutModal() {
+        if (cart.length === 0) return alert("Keranjang kosong beb!");
+
+        // Hitung total
+        const total = cart.reduce(
+          (acc, item) => acc + item.price * item.quantity,
+          0,
+        );
+
+        // Tampilkan Total di Modal
+        document.getElementById("checkout-total").innerText =
+          "Rp " + total.toLocaleString();
+
+        // Buka Modal & Tutup Keranjang
+        document.getElementById("checkout-modal").classList.remove("hidden");
+        toggleCart();
+      }
+
+      //Klik "Buat Pesanan" di Modal -> Kirim ke Server
+      async function processCheckout() {
+        const user = localStorage.getItem("user");
+        const method = document.getElementById("payment-method-select").value; // Ambil pilihan user
+
+        // Siapkan Data
+        const orderData = {
+          username: user || "Guest",
+          items: cart,
+          total: cart.reduce(
+            (total, item) => total + item.price * item.quantity,
+            0,
+          ),
+          paymentMethod: method, // METODE BAYAR
+        };
+
+        try {
+          const res = await fetch("http://localhost:3000/api/orders", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(orderData),
+          });
+
+          if (res.ok) {
+            alert("Pesanan berhasil dibuat! Silakan cek menu Pesanan Saya.");
+            cart = []; // Kosongkan keranjang
+            updateCartUI();
+            document.getElementById("checkout-modal").classList.add("hidden"); // Tutup modal
+
+            // Opsional: Langsung buka riwayat pesanan
+            // toggleOrderHistory();
+          }
+        } catch (err) {
+          alert("Gagal membuat pesanan.");
+        }
+      }
+
+      // Fungsi Toggle Riwayat Pesanan
+      function toggleOrderHistory() {
+        const modal = document.getElementById("order-modal");
+        const isHidden = modal.classList.contains("hidden");
+
+        if (isHidden) {
+          modal.classList.remove("hidden");
+          fetchMyOrders(); // Ambil data pas dibuka
+        } else {
+          modal.classList.add("hidden");
+        }
+      }
+
+      // Fungsi Ambil Riwayat Pesanan Saya
+      async function fetchMyOrders() {
+        const user = localStorage.getItem("user");
+        const container = document.getElementById("my-order-list");
+
+        if (!user) return;
+
+        const res = await fetch(
+          `http://localhost:3000/api/orders/user/${user}`,
+        );
+        const orders = await res.json();
+
+        container.innerHTML = "";
+
+        if (orders.length === 0) {
+          container.innerHTML = `
+      <div class="text-center py-8">
+        <p class="text-gray-400">Belum ada riwayat pesanan.</p>
+        <button onclick="toggleOrderHistory()" class="text-red-600 font-bold mt-2 hover:underline">Belanja Sekarang</button>
+      </div>`;
+          return;
+        }
+
+        // Render List Pesanan
+        orders.forEach((order) => {
+          // Format Tanggal
+          const date = new Date(order.tanggal).toLocaleDateString("id-ID", {
+            day: "numeric",
+            month: "short",
+            year: "numeric",
+            hour: "2-digit",
+            minute: "2-digit",
+          });
+
+          container.innerHTML += `
+  <div class="bg-white p-4 rounded-lg border border-gray-200 shadow-sm">
+    <div class="flex justify-between items-start mb-3 border-b pb-2">
+        <div>
+            <p class="text-xs text-gray-500">#${order._id.slice(-6)} • ${date}</p>
+            <p class="text-xs font-bold text-gray-700 mt-1">💳 ${order.paymentMethod || "Transfer Bank"}</p>
+        </div>`;
+
+          // Format Warna Status
+          let statusColor = "bg-gray-200 text-gray-600";
+          if (order.status === "Diproses")
+            statusColor = "bg-blue-100 text-blue-700";
+          if (order.status === "Dikirim" || order.status === "Selesai")
+            statusColor = "bg-green-100 text-green-700";
+          if (order.status === "Dibatalkan")
+            statusColor = "bg-red-100 text-red-700";
+
+          // --- LOGIKA ITEM & EDIT DETAIL ---
+          // Kita loop items dengan index-nya (i) untuk tahu barang mana yang diedit
+          const itemsHtml = order.items
+            .map((item, i) => {
+              // Cek apakah ada catatan detail, kalau tidak ada strip (-)
+              const detail = item.detail || "-";
+
+              // Tombol Edit hanya muncul jika status Pending
+              let editBtn = "";
+              if (order.status === "Pending") {
+                // Kita panggil fungsi editItemDetail dengan ID Order dan Index Barang
+                editBtn = `
+                <button onclick="editItemDetail('${order._id}', ${i}, '${detail}')" 
+                   class="text-blue-500 text-xs ml-2 hover:underline">
+                   ✏️ Ubah Detail
+                </button>
+            `;
+              }
+
+              return `
+         <li class="flex justify-between text-sm text-gray-600 mb-2 border-b border-dashed pb-2">
+            <div class="flex-1">
+                <div class="font-bold text-gray-800">${item.quantity}x ${item.name}</div>
+                <div class="text-xs text-gray-500 mt-1">
+                    Detail: <span class="font-semibold text-gray-700">${detail}</span>
+                    ${editBtn}
+                </div>
+            </div>
+            <span class="font-medium">Rp ${(item.price * item.quantity).toLocaleString()}</span>
+         </li>`;
+            })
+            .join("");
+
+          // Tombol hanya muncul jika status masih 'Pending'
+          let tombolBatal = "";
+          if (order.status === "Pending") {
+            tombolBatal = `
+            <button onclick="cancelMyOrder('${order._id}')" 
+                class="mt-3 w-full text-center border border-red-500 text-red-500 text-xs font-bold py-2 rounded hover:bg-red-50 transition">
+                Batalkan Pesanan
+            </button>
+        `;
+          }
+
+          container.innerHTML += `
+      <div class="bg-white p-4 rounded-lg border border-gray-200 shadow-sm">
+        <div class="flex justify-between items-start mb-3 border-b pb-2">
+            <div>
+                <p class="text-xs text-gray-500">#${order._id.slice(-6)} • ${date}</p>
+            </div>
+            <span class="${statusColor} px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wide">
+                ${order.status}
+            </span>
+        </div>
+        
+        <ul class="space-y-1 mb-3">
+            ${itemsHtml}
+        </ul>
+
+        <div class="flex justify-between items-center pt-2 border-t border-dashed mb-2">
+            <span class="font-bold text-gray-700 text-sm">Total</span>
+            <span class="font-bold text-red-600">Rp ${order.total.toLocaleString()}</span>
+        </div>
+
+        ${tombolBatal} 
+      </div>
+    `;
+        });
+      }
+
+      async function editItemDetail(orderId, itemIndex, currentDetail) {
+        // 1. Minta Input User
+        const newDetail = prompt(
+          "Masukkan Ukuran/Warna/Catatan:",
+          currentDetail === "-" ? "" : currentDetail,
+        );
+
+        // Jika user klik Cancel atau kosong, batalkan
+        if (newDetail === null) return;
+
+        // 2. Ambil Data Order Dulu dari Server (Biar sinkron)
+        // Kita butuh array 'items' yang utuh
+        try {
+          const user = localStorage.getItem("user");
+          const res = await fetch(
+            `http://localhost:3000/api/orders/user/${user}`,
+          );
+          const orders = await res.json();
+
+          // Cari order yang sedang diedit
+          const order = orders.find((o) => o._id === orderId);
+
+          if (order) {
+            // 3. Update Item Spesifik di Array
+            order.items[itemIndex].detail = newDetail;
+
+            // 4. Kirim Update ke Server
+            const updateRes = await fetch(
+              `http://localhost:3000/api/orders/${orderId}`,
+              {
+                method: "PUT",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ items: order.items }), // Kirim items yang baru
+              },
+            );
+
+            if (updateRes.ok) {
+              alert("Detail pesanan berhasil diubah!");
+              fetchMyOrders(); // Refresh tampilan
+            }
+          }
+        } catch (err) {
+          console.error(err);
+          alert("Terjadi kesalahan koneksi.");
+        }
+      }
+
+      // Fungsi Batalkan Pesanan Saya
+      async function cancelMyOrder(id) {
+        if (!confirm("Yakin ingin membatalkan pesanan ini?")) return;
+
+        // 2. Kirim request update ke server
+        //pakai endpoint yang sama dengan yang dipakai Admin untuk update status
+        const res = await fetch(`http://localhost:3000/api/orders/${id}`, {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ status: "Dibatalkan" }),
+        });
+
+        if (res.ok) {
+          alert("Pesanan berhasil dibatalkan.");
+          fetchMyOrders(); // Refresh biar berubah jadi 'Dibatalkan'
+        } else {
+          alert("Gagal membatalkan pesanan.");
+        }
+      }
+
+      // transaksi user
+      function openTransactionModal() {
+        document.getElementById("transaction-modal").classList.remove("hidden");
+        fetchTransactions();
+      }
+
+      function closeTransactionModal() {
+        document.getElementById("transaction-modal").classList.add("hidden");
+      }
+
+      async function fetchTransactions() {
+        const user = localStorage.getItem("user");
+        if (!user) {
+          alert("Silakan login dulu ya beb!");
+          return;
+        }
+
+        const list = document.getElementById("transaction-list");
+        const totalSpendLabel = document.getElementById("total-spend");
+
+        // Loading state
+        list.innerHTML = `<tr><td colspan="3" class="text-center py-4">Memuat data...</td></tr>`;
+
+        try {
+          const res = await fetch(
+            `http://localhost:3000/api/orders/user/${user}`,
+          );
+          const orders = await res.json();
+
+          list.innerHTML = "";
+          let totalSpend = 0;
+
+          if (orders.length === 0) {
+            list.innerHTML = `<tr><td colspan="3" class="text-center py-8 text-gray-400">Belum ada transaksi.</td></tr>`;
+            totalSpendLabel.innerText = "Rp 0";
+            return;
+          }
+
+          // Urutkan dari terbaru
+          orders.sort((a, b) => new Date(b.tanggal) - new Date(a.tanggal));
+
+          orders.forEach((order) => {
+            const date = new Date(order.tanggal).toLocaleDateString("id-ID", {
+              day: "numeric",
+              month: "short",
+              year: "numeric",
+            });
+
+            // Tentukan Status & Warna
+            let payStatus = "LUNAS";
+            let payColor = "text-green-600 bg-green-100";
+            let amountClass = "font-bold text-gray-800";
+
+            if (order.status === "Pending") {
+              payStatus = "MENUNGGU";
+              payColor = "text-orange-600 bg-orange-100";
+            } else if (order.status === "Dibatalkan") {
+              payStatus = "BATAL";
+              payColor = "text-red-600 bg-red-100";
+              amountClass = "text-gray-400 line-through";
+            } else {
+              totalSpend += order.total;
+            }
+
+            list.innerHTML += `
+                <tr class="border-b border-gray-100 hover:bg-white transition">
+                    <td class="py-4 pr-2 align-top">
+                        <div class="font-bold text-gray-700">#${order._id.slice(-6).toUpperCase()}</div>
+                        <div class="text-xs text-gray-400 mt-1">${date}</div>
+                    </td>
+                    <td class="py-4 align-top">
+                        <span class="${payColor} px-2 py-1 rounded text-[10px] font-bold tracking-wider border border-opacity-20">
+                            ${payStatus}
+                        </span>
+                        <div class="text-xs text-gray-500 mt-1">Order: ${order.status}</div>
+                    </td>
+                    <td class="py-4 pl-2 text-right align-top">
+                        <div class="${amountClass}">Rp ${order.total.toLocaleString()}</div>
+                    </td>
+                </tr>
+            `;
+          });
+
+          totalSpendLabel.innerText = "Rp " + totalSpend.toLocaleString();
+        } catch (err) {
+          console.error(err);
+          list.innerHTML = `<tr><td colspan="3" class="text-center text-red-500 py-4">Gagal mengambil data.</td></tr>`;
+        }
+      }
+
+      window.onload = loadProducts;
+    </script>
+  </body>
+</html>

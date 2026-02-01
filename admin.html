@@ -1,0 +1,287 @@
+<!doctype html>
+<html lang="id">
+  <head>
+    <meta charset="UTF-8" />
+    <script src="https://cdn.tailwindcss.com"></script>
+    <title>Admin Panel - Kelola Produk</title>
+  </head>
+  <body class="bg-gray-100 p-8">
+    <div class="max-w-4xl mx-auto">
+      <h1 class="text-3xl font-bold mb-6 text-gray-800">
+        📦 Kelola Produk Konveksi
+      </h1>
+
+      <div class="bg-white p-6 rounded-xl shadow-md mb-8">
+        <h2 id="form-title" class="text-xl font-bold mb-4">
+          Tambah Produk Baru
+        </h2>
+        <input type="hidden" id="prod-id" />
+        <div class="grid grid-cols-2 gap-4">
+          <input
+            id="prod-nama"
+            type="text"
+            placeholder="Nama Produk"
+            class="border p-2 rounded" />
+          <input
+            id="prod-harga"
+            type="number"
+            placeholder="Harga (Rp)"
+            class="border p-2 rounded" />
+          <input
+            id="prod-gambar"
+            type="text"
+            placeholder="URL Gambar"
+            class="border p-2 rounded" />
+          <input
+            id="prod-desc"
+            type="text"
+            placeholder="Deskripsi Singkat"
+            class="border p-2 rounded" />
+        </div>
+        <button
+          onclick="saveProduct()"
+          class="mt-4 bg-blue-600 text-white px-6 py-2 rounded-lg font-bold hover:bg-blue-700">
+          Simpan Produk
+        </button>
+        <button
+          onclick="resetForm()"
+          class="mt-4 bg-gray-400 text-white px-6 py-2 rounded-lg font-bold">
+          Batal
+        </button>
+      </div>
+
+      <div class="bg-white rounded-xl shadow-md overflow-hidden">
+        <table class="w-full text-left">
+          <thead class="bg-gray-200">
+            <tr>
+              <th class="p-4">Produk</th>
+              <th class="p-4">Harga</th>
+              <th class="p-4">Aksi</th>
+            </tr>
+          </thead>
+          <tbody id="product-list"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <h2 class="text-2xl font-bold mb-4 mt-12 text-gray-800">
+      📋 Daftar Pesanan Masuk
+    </h2>
+
+    <div class="bg-white rounded-xl shadow-md overflow-hidden mb-12">
+      <table class="w-full text-left">
+        <thead class="bg-yellow-100">
+          <tr>
+            <th class="p-4">1. Tanggal & Customer</th>
+            <th class="p-4">2. Pembayaran</th>
+            <th class="p-4">3. Detail Item</th>
+            <th class="p-4">4. Total</th>
+            <th class="p-4">5. Status</th>
+            <th class="p-4">6. Aksi</th>
+          </tr>
+        </thead>
+        <tbody id="order-list"></tbody>
+      </table>
+    </div>
+
+    <script>
+      const API_URL = "http://localhost:3000/api/products";
+
+      // READ
+      async function fetchProducts() {
+        const res = await fetch(API_URL);
+        const products = await res.json();
+        const list = document.getElementById("product-list");
+        list.innerHTML = "";
+
+        products.forEach((p) => {
+          list.innerHTML += `
+      <tr class="border-b hover:bg-gray-50">
+        
+        <td class="p-4 align-top">
+            <div class="font-bold text-gray-800">${o.username}</div>
+            <div class="text-xs text-gray-500">${date}</div>
+        </td>
+
+        <td class="p-4 align-top">
+            <span class="bg-purple-100 text-purple-700 px-2 py-1 rounded-xs font-bold text-xs">
+                ${o.paymentMethod || "Transfer"}
+            </span>
+        </td>
+        <td class="p-4 align-top">
+            ${itemsHtml}
+        </td>
+
+        <td class="p-4 font-bold text-green-600 align-top">
+            Rp ${o.total.toLocaleString()}
+        </td>
+
+        <td class="p-4 align-top">
+           </td>
+
+        <td class="p-4 align-top">
+           </td>
+      </tr>
+    `;
+        });
+      }
+
+      // CREATE & UPDATE
+      async function saveProduct() {
+        const id = document.getElementById("prod-id").value;
+        const data = {
+          nama: document.getElementById("prod-nama").value,
+          harga: parseInt(document.getElementById("prod-harga").value),
+          gambar: document.getElementById("prod-gambar").value,
+          deskripsi: document.getElementById("prod-desc").value,
+        };
+
+        const method = id ? "PUT" : "POST";
+        const url = id ? `${API_URL}/${id}` : API_URL;
+
+        const res = await fetch(url, {
+          method: method,
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(data),
+        });
+
+        if (res.ok) {
+          alert("Berhasil!");
+          resetForm();
+          fetchProducts();
+        }
+      }
+
+      // DELETE
+      async function deleteProduct(id) {
+        if (confirm("Hapus produk ini?")) {
+          await fetch(`${API_URL}/${id}`, { method: "DELETE" });
+          fetchProducts();
+        }
+      }
+
+      function editProduct(p) {
+        document.getElementById("form-title").innerText = "Edit Produk";
+        document.getElementById("prod-id").value = p._id;
+        document.getElementById("prod-nama").value = p.nama;
+        document.getElementById("prod-harga").value = p.harga;
+        document.getElementById("prod-gambar").value = p.gambar;
+        document.getElementById("prod-desc").value = p.deskripsi;
+      }
+
+      function resetForm() {
+        document.getElementById("form-title").innerText = "Tambah Produk Baru";
+        document.getElementById("prod-id").value = "";
+        document.getElementById("prod-nama").value = "";
+        document.getElementById("prod-harga").value = "";
+        document.getElementById("prod-gambar").value = "";
+        document.getElementById("prod-desc").value = "";
+      }
+
+      //LOGIKA PESANAN
+      async function fetchOrders() {
+        const res = await fetch("http://localhost:3000/api/orders");
+        const orders = await res.json();
+        const list = document.getElementById("order-list");
+        list.innerHTML = "";
+
+        if (orders.length === 0) {
+          // colspan=6 karena jumlah kolom kita sekarang 6
+          list.innerHTML = `<tr><td colspan="6" class="p-4 text-center text-gray-500">Belum ada pesanan masuk.</td></tr>`;
+          return;
+        }
+
+        orders.forEach((o) => {
+          // Format Tanggal
+          const date = new Date(o.tanggal).toLocaleDateString("id-ID", {
+            day: "numeric",
+            month: "long",
+            year: "numeric",
+            hour: "2-digit",
+            minute: "2-digit",
+          });
+
+          // Format Detail Barang
+          const itemsHtml = o.items
+            .map(
+              (item) =>
+                `<div class="text-sm mb-1">
+         • <b>${item.name}</b> (${item.quantity}x) <br>
+         <span class="text-xs text-gray-500 ml-3 italic">${item.detail || "-"}</span>
+       </div>`,
+            )
+            .join("");
+
+          list.innerHTML += `
+      <tr class="border-b hover:bg-gray-50">
+        
+        <td class="p-4 align-top">
+            <div class="font-bold text-gray-800">${o.username}</div>
+            <div class="text-xs text-gray-500">${date}</div>
+        </td>
+
+        <td class="p-4 align-top">
+            <span class="bg-purple-100 text-purple-700 px-2 py-1 rounded text-xs font-bold whitespace-nowrap">
+                ${o.paymentMethod || "Transfer Bank"}
+            </span>
+        </td>
+
+        <td class="p-4 align-top">
+            ${itemsHtml}
+        </td>
+
+        <td class="p-4 font-bold text-green-600 align-top whitespace-nowrap">
+            Rp ${o.total.toLocaleString()}
+        </td>
+
+        <td class="p-4 align-top">
+            <select onchange="updateOrderStatus('${o._id}', this.value)" 
+                    class="border p-2 rounded bg-white text-xs font-bold text-gray-700 cursor-pointer">
+                <option value="Pending" ${o.status === "Pending" ? "selected" : ""}>🕒 Pending</option>
+                <option value="Diproses" ${o.status === "Diproses" ? "selected" : ""}>⚙️ Diproses</option>
+                <option value="Dikirim" ${o.status === "Dikirim" ? "selected" : ""}>🚚 Dikirim</option>
+                <option value="Selesai" ${o.status === "Selesai" ? "selected" : ""}>✅ Selesai</option>
+                <option value="Dibatalkan" ${o.status === "Dibatalkan" ? "selected" : ""}>❌ Dibatalkan</option>
+            </select>
+        </td>
+
+        <td class="p-4 align-top">
+            <button onclick="deleteOrder('${o._id}')" class="text-red-600 hover:text-red-800 text-sm font-bold">Hapus</button>
+        </td>
+      </tr>
+    `;
+        });
+      }
+
+      async function deleteOrder(id) {
+        if (confirm("Hapus riwayat pesanan ini?")) {
+          await fetch(`http://localhost:3000/api/orders/${id}`, {
+            method: "DELETE",
+          });
+          fetchOrders(); // Refresh tabel setelah hapus
+        }
+      }
+
+      // Fungsi untuk kirim update ke server saat dropdown berubah
+      async function updateOrderStatus(id, newStatus) {
+        // Opsional: Kasih loading/feedback kecil
+        const res = await fetch(`http://localhost:3000/api/orders/${id}`, {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ status: newStatus }),
+        });
+
+        if (res.ok) {
+          console.log("Status updated to " + newStatus);
+        } else {
+          alert("Gagal update status!");
+        }
+      }
+
+      window.onload = function () {
+        fetchProducts(); // Muat produk
+        fetchOrders(); // Muat pesanan
+      };
+    </script>
+  </body>
+</html>
